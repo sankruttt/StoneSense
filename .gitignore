@@ -33,6 +33,7 @@ uploads/
 outputs/
 reports/
 runs/
+data/
 
 # Build artifacts
 dist/
