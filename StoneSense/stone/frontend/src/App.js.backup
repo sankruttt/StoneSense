@@ -1,0 +1,370 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import './App.css';
+
+function App() {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
+  const [patientInfo, setPatientInfo] = useState({
+    patient_name: '',
+    patient_age: '',
+    patient_gender: '',
+    patient_id: '',
+    doctor_name: ''
+  });
+  
+  // Chatbot state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setPreview(URL.createObjectURL(file));
+      setResults(null);
+      setError(null);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setPatientInfo({
+      ...patientInfo,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleUpload = async () => {
+    if (!selectedImage) {
+      setError('Please select an image first');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('image', selectedImage);
+    formData.append('patient_name', patientInfo.patient_name);
+    formData.append('patient_age', patientInfo.patient_age);
+    formData.append('patient_gender', patientInfo.patient_gender);
+    formData.append('patient_id', patientInfo.patient_id);
+    formData.append('doctor_name', patientInfo.doctor_name);
+
+    try {
+      const response = await axios.post('/api/detect', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setResults(response.data);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to analyze image';
+      setError(`Error: ${errorMsg}`);
+      console.error('Full error:', err);
+      console.error('Error response:', err.response);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const response = await axios.post('/api/generate-pdf', results, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `kidney_stone_report_${results.timestamp}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setError('Failed to generate PDF');
+      console.error('Error:', err);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+
+    const userMessage = {
+      role: 'user',
+      content: chatInput
+    };
+
+    setChatMessages([...chatMessages, userMessage]);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const response = await axios.post('/api/chat', {
+        message: chatInput,
+        scan_results: results,
+        history: chatMessages
+      });
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: response.data.message
+      };
+
+      setChatMessages([...chatMessages, userMessage, assistantMessage]);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to get response';
+      const errorMessage = {
+        role: 'assistant',
+        content: `Error: ${errorMsg}`
+      };
+      setChatMessages([...chatMessages, userMessage, errorMessage]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleChatKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const formatMessage = (text) => {
+    // Convert markdown-style formatting to HTML
+    let formatted = text
+      // Bold text **text** to <strong>
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // Bullet points - item or * item
+      .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
+      // Numbered lists 1. item
+      .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
+      // Line breaks
+      .replace(/\n/g, '<br/>');
+    
+    // Wrap consecutive <li> tags in <ul>
+    formatted = formatted.replace(/(<li>.*<\/li>)(<br\/>)?(<li>.*<\/li>)/g, '<ul>$1$3</ul>');
+    formatted = formatted.replace(/(<li>.*?<\/li>)/g, function(match) {
+      if (!match.includes('<ul>')) {
+        return '<ul>' + match + '</ul>';
+      }
+      return match;
+    });
+    
+    return formatted;
+  };
+
+  return (
+    <div className="App">
+      <div className="container">
+        <div className="header">
+          <div className="logo">+</div>
+          <h1>StoneSense</h1>
+        </div>
+        
+        <div className="main-content">
+          <p className="subtitle">AI-Powered Kidney Stone Detection & Analysis</p>
+
+          <div className="patient-form">
+            <h3>Patient Information</h3>
+            <div className="form-grid">
+              <input
+                type="text"
+                name="patient_name"
+                placeholder="Patient Name"
+                value={patientInfo.patient_name}
+                onChange={handleInputChange}
+              />
+              <input
+                type="text"
+                name="patient_id"
+                placeholder="Patient ID"
+                value={patientInfo.patient_id}
+                onChange={handleInputChange}
+              />
+              <input
+                type="number"
+                name="patient_age"
+                placeholder="Age"
+                value={patientInfo.patient_age}
+                onChange={handleInputChange}
+              />
+              <select
+                name="patient_gender"
+                value={patientInfo.patient_gender}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+              <input
+                type="text"
+                name="doctor_name"
+                placeholder="Referring Doctor"
+                value={patientInfo.doctor_name}
+                onChange={handleInputChange}
+                className="full-width"
+              />
+            </div>
+          </div>
+
+          <div className="upload-section">
+            <h3>Upload Scan Image</h3>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              id="file-input"
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="file-input" className="upload-btn">
+              Choose Image
+            </label>
+            
+            {preview && (
+              <div className="preview">
+                <img src={preview} alt="Preview" />
+              </div>
+            )}
+
+            {selectedImage && !loading && (
+              <button onClick={handleUpload} className="analyze-btn">
+                Analyze Image
+              </button>
+            )}
+
+            {loading && <div className="loader">Analyzing scan...</div>}
+            {error && <div className="error">{error}</div>}
+          </div>
+
+          {results && (
+            <div className="results">
+              <h2>Detection Results</h2>
+              
+              <div className="severity-badge">
+                <div className={`severity ${results.severity.toLowerCase()}`}>
+                  {results.severity}
+                </div>
+                <p className="severity-desc">{results.severity_description}</p>
+              </div>
+
+              <div className="summary">
+                <div className="stat">
+                  <span className="label">Stones Detected:</span>
+                  <span className="value">{results.num_stones}</span>
+                </div>
+              </div>
+
+              <button onClick={handleDownloadPDF} className="pdf-btn">
+                📄 Download PDF Report
+              </button>
+
+            {results.stones && results.stones.length > 0 && (
+              <div className="stones-list">
+                <h3>Stone Details</h3>
+                {results.stones.map((stone) => (
+                  <div key={stone.id} className="stone-card">
+                    <div className="stone-header">Stone #{stone.id}</div>
+                    <div className="stone-detail">
+                      <span>Diameter:</span>
+                      <span>{stone.diameter_px} px</span>
+                    </div>
+                    <div className="stone-detail">
+                      <span>Size:</span>
+                      <span>{stone.width_px} × {stone.height_px} px</span>
+                    </div>
+                    <div className="stone-detail">
+                      <span>Confidence:</span>
+                      <span>{(stone.confidence * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {results.output_image && (
+              <div className="output-image">
+                <h3>Annotated Image</h3>
+                <img src={results.output_image} alt="Detection result" />
+              </div>
+            )}
+          </div>
+        )}
+        </div>
+      </div>
+
+      {/* Chatbot */}
+      <div className={`chatbot-container ${chatOpen ? 'open' : ''}`}>
+        <div className="chatbot-header" onClick={() => setChatOpen(!chatOpen)}>
+          <span>💬 Health Assistant</span>
+          <span className="toggle-icon">{chatOpen ? '−' : '+'}</span>
+        </div>
+        
+        {chatOpen && (
+          <div className="chatbot-content">
+            <div className="chat-messages">
+              {chatMessages.length === 0 && (
+                <div className="chat-welcome">
+                  <p>👋 Hello! I'm your kidney health assistant.</p>
+                  <p>Ask me about:</p>
+                  <ul>
+                    <li>Your scan results</li>
+                    <li>Kidney stone prevention tips</li>
+                    <li>Dietary recommendations</li>
+                    <li>When to see a doctor</li>
+                  </ul>
+                </div>
+              )}
+              
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`chat-message ${msg.role}`}>
+                  <div 
+                    className="message-content"
+                    dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
+                  />
+                </div>
+              ))}
+              
+              {chatLoading && (
+                <div className="chat-message assistant">
+                  <div className="message-content typing">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="chat-input-container">
+              <textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={handleChatKeyPress}
+                placeholder="Ask about kidney health or your scan..."
+                rows="2"
+                disabled={chatLoading}
+              />
+              <button 
+                onClick={handleSendMessage}
+                disabled={chatLoading || !chatInput.trim()}
+                className="send-btn"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;

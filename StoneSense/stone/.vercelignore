@@ -1,0 +1,38 @@
+# Python backend files
+app.py
+stone_detection.py
+*.py
+*.pyc
+__pycache__/
+venv/
+env/
+
+# YOLO model files
+*.pt
+yolo11m.pt
+yolo11n.pt
+
+# Data and outputs
+data/
+uploads/
+outputs/
+reports/
+runs/
+
+# Sample data
+sample_data/
+
+# Templates
+templates/
+
+# Environment files
+.env
+.env.local
+serviceAccountKey.json
+
+# Node modules (will be installed by Vercel)
+node_modules/
+
+# Git
+.git/
+.gitignore

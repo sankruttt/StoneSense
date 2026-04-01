@@ -1,0 +1,13 @@
+flask>=3.0
+flask-cors>=4.0.0
+ultralytics>=8.0.196
+Pillow>=10.0.0
+torch; platform_system != 'Windows' or platform_machine != 'ARM64'
+opencv-python-headless>=4.8.0.74
+reportlab>=4.0.0
+openai>=1.0.0
+python-dotenv>=1.0.0
+firebase-admin>=6.0.0
+twilio>=9.0.0
+
+gunicorn==21.2.0
