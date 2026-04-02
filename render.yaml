@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: stonesense-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: StoneSense/stone
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: BASE_URL
+        sync: false

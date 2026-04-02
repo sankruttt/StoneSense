@@ -28,17 +28,25 @@ CORS(app)
 
 # Initialize Firebase Admin SDK
 try:
-    # Try to initialize with service account (you'll need to set this up)
-    # For now, initialize without credentials (will work with emulator or if already initialized)
-    cred = credentials.Certificate('serviceAccountKey.json')
-    firebase_admin.initialize_app(cred)
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app()
+    # Try to load credentials from env var (Render), then file (local dev)
+    firebase_creds_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
+    if firebase_creds_json:
+        # Parse JSON from environment variable
+        creds_dict = json.loads(firebase_creds_json)
+        cred = credentials.Certificate(creds_dict)
+        firebase_admin.initialize_app(cred)
+    elif os.path.exists('serviceAccountKey.json'):
+        cred = credentials.Certificate('serviceAccountKey.json')
+        firebase_admin.initialize_app(cred)
+    else:
+        # Initialize without credentials (will fail on auth endpoints but app starts)
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app()
     db = firestore.client()
     print("✓ Firebase Admin initialized")
 except Exception as e:
     print(f"⚠️ Firebase Admin initialization: {e}")
-    print("Note: You'll need to set up a service account JSON file for production")
+    print("Note: For production, set FIREBASE_SERVICE_ACCOUNT_JSON env var or provide serviceAccountKey.json")
     db = None
 
 # Token verification decorator
@@ -84,10 +92,19 @@ def firebase_required(f):
     
     return decorated_function
 
-# Load YOLO model
+# Load YOLO model with fallback
 MODEL_PATH = 'runs/detect/train2/weights/best.pt'
-model = YOLO(MODEL_PATH)
-print(f"✓ Model loaded from {MODEL_PATH}")
+if not os.path.exists(MODEL_PATH):
+    # Fallback to pre-downloaded model if custom model not available
+    MODEL_PATH = 'yolo11m.pt' if os.path.exists('yolo11m.pt') else 'yolo11n.pt'
+    print(f"⚠️ Primary model not found, using fallback: {MODEL_PATH}")
+
+try:
+    model = YOLO(MODEL_PATH)
+    print(f"✓ Model loaded from {MODEL_PATH}")
+except Exception as e:
+    print(f"❌ Failed to load model from {MODEL_PATH}: {e}")
+    model = None
 
 # Create directories
 os.makedirs('uploads', exist_ok=True)
@@ -362,6 +379,10 @@ def serve_pdf(filename):
 @firebase_required
 def detect():
     try:
+        # Check if model loaded successfully
+        if model is None:
+            return jsonify({'error': 'Detection model not available. Server is initializing or misconfigured.'}), 503
+        
         if 'image' not in request.files:
             return jsonify({'error': 'No image provided'}), 400
         
