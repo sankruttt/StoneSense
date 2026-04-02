@@ -92,12 +92,8 @@ def firebase_required(f):
     
     return decorated_function
 
-# Load YOLO model with fallback
+# Load YOLO model
 MODEL_PATH = 'runs/detect/train2/weights/best.pt'
-if not os.path.exists(MODEL_PATH):
-    # Fallback to smaller pre-downloaded model if custom model not available
-    MODEL_PATH = 'yolo11n.pt' if os.path.exists('yolo11n.pt') else 'yolo11m.pt'
-    print(f"⚠️ Primary model not found, using fallback: {MODEL_PATH}")
 
 try:
     model = YOLO(MODEL_PATH)
