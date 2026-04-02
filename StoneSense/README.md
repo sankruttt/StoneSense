@@ -12,115 +12,13 @@
 
 ## 📖 Overview
 
-**StoneSense** is an advanced AI-powered medical imaging platform specifically designed for automated kidney stone detection and analysis. Developed during the **NeuraX Hackathon 2025** at **CMR Technical Campus (CMRTC)**, this comprehensive solution combines cutting-edge computer vision technology with intuitive user interfaces to revolutionize kidney stone diagnosis and patient care.
+**StoneSense** is an advanced AI-powered medical imaging platform specifically designed for automated kidney stone detection and analysis. This comprehensive solution combines cutting-edge computer vision technology with intuitive user interfaces to revolutionize kidney stone diagnosis and patient care.
 
 The platform leverages YOLO v11 (You Only Look Once) neural networks for real-time stone detection, integrated with a modern Next.js frontend and robust Flask backend, providing healthcare professionals and patients with instant, accurate analysis of medical scans.
 
 ---
 
-## 🏗️ Project Architecture
 
-### **Workspace Structure**
-
-```
-stones/
-├── 📄 suggestions.md                    # Project suggestions and notes
-├── 📄 README.md                        # This comprehensive documentation
-│
-├── 🔧 stone/                           # Python Flask Backend
-│   ├── 🧠 AI & Detection Models
-│   │   ├── stone_detection.py          # Core YOLO-based detection engine
-│   │   ├── yolo11m.pt                 # YOLO v11 medium model weights
-│   │   ├── yolo11n.pt                 # YOLO v11 nano model weights
-│   │   └── chatbot_service.py         # OpenAI-powered health advisor
-│   │
-│   ├── 🌐 Web Application
-│   │   ├── flask_app.py               # Main Flask application server
-│   │   ├── templates/
-│   │   │   └── index.html             # Basic web interface template
-│   │   └── uploads/                   # Patient scan upload directory
-│   │
-│   ├── 📊 Data Management
-│   │   ├── user_data.csv             # Patient information database
-│   │   ├── doctor_contacts.csv       # Healthcare provider directory
-│   │   ├── data/                     # Training dataset
-│   │   │   ├── data.yaml            # Dataset configuration
-│   │   │   ├── train/               # Training images & annotations
-│   │   │   ├── valid/               # Validation dataset
-│   │   │   └── test/                # Test dataset
-│   │   └── sample_data/             # Sample datasets for testing
-│   │
-│   ├── 📑 Reports & Analytics
-│   │   ├── reports/                 # Generated PDF medical reports
-│   │   └── runs/                    # YOLO detection run outputs
-│   │
-│   ├── 🧪 Testing & Quality Assurance
-│   │   ├── test_api.py             # Flask API endpoint tests
-│   │   ├── test_improved_api.py    # Enhanced API testing suite
-│   │   ├── test_complete_flow.js   # End-to-end flow testing
-│   │   └── test_data_flow.js       # Data pipeline testing
-│   │
-│   └── ⚙️ Configuration
-│       ├── requirements.txt         # Python dependencies
-│       ├── .env                    # Environment variables
-│       └── __pycache__/            # Python bytecode cache
-│
-└── 🌐 stones-web/                     # Next.js Frontend Application
-    ├── 📱 User Interface
-    │   ├── app/                     # Next.js 13+ App Router
-    │   │   ├── page.js              # Landing page
-    │   │   ├── layout.js            # Root layout component
-    │   │   ├── globals.css          # Global styling
-    │   │   ├── (auth)/              # Authentication routes
-    │   │   │   ├── login/           # User login page
-    │   │   │   └── register/        # User registration page
-    │   │   ├── upload/              # Scan upload interface
-    │   │   ├── results/             # Detection results display
-    │   │   ├── patient/             # Patient dashboard
-    │   │   ├── ask_doc/             # Doctor consultation feature
-    │   │   └── api/                 # API route handlers
-    │   │       ├── auth/            # Authentication endpoints
-    │   │       ├── detect/          # Image detection API
-    │   │       └── predict/         # AI prediction endpoints
-    │   │
-    │   ├── components/              # Reusable UI components
-    │   │   ├── ui/                  # Base UI component library
-    │   │   │   ├── button.jsx       # Custom button components
-    │   │   │   ├── card.jsx         # Card layout components
-    │   │   │   ├── dialog.jsx       # Modal dialog components
-    │   │   │   ├── input.jsx        # Form input components
-    │   │   │   └── loading-spinner.jsx # Loading indicators
-    │   │   └── chatbot/
-    │   │       └── HealthChatbot.jsx # AI health advisor chatbot
-    │   │
-    │   ├── lib/                     # Core application libraries
-    │   │   ├── firebase-client.js   # Firebase client configuration
-    │   │   ├── firebase-admin.js    # Firebase admin SDK setup
-    │   │   ├── auth-context.js      # Authentication context provider
-    │   │   ├── context/             # React context providers
-    │   │   └── translations/        # Internationalization support
-    │   │
-    │   └── public/                  # Static assets
-    │       ├── doc.png              # Doctor consultation icon
-    │       ├── login.png            # Login page illustration
-    │       └── splash-screen.png    # Application logo
-    │
-    ├── ⚙️ Configuration & Build
-    │   ├── package.json             # Node.js dependencies & scripts
-    │   ├── next.config.mjs          # Next.js configuration
-    │   ├── tailwindcss.config.js    # Tailwind CSS configuration
-    │   ├── postcss.config.mjs       # PostCSS configuration
-    │   ├── eslint.config.mjs        # ESLint code quality rules
-    │   ├── jsconfig.json            # JavaScript project configuration
-    │   ├── .env.local               # Local environment variables
-    │   ├── .env.example             # Environment variables template
-    │   └── middleware.js            # Next.js middleware
-    │
-    └── 🏗️ Build Output
-        └── .next/                   # Next.js build artifacts
-```
-
----
 
 ## ✨ Key Features & Functionalities
 
